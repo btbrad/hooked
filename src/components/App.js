@@ -1,41 +1,80 @@
-import React, { useState, useEffect } from 'react';
+import React, { useReducer, useEffect } from 'react';
 import './App.css';
 import Movie from './Movie'
 import Header from './header'
 import Search from './Search'
 
-const MOVIE_API_URL = "https://www.omdbapi.com/?s=man&apikey=4a3b711b"
+const MOVIE_API_URL = "https://www.omdbapi.com/?s=mission&apikey=99fc8e27"
+
+const initialState = {
+  loading: true,
+  moves: [],
+  errorMessage: null
+}
+
+const reducer = (state, action) => {
+  switch(action.type) {
+    case 'SEARCH_MOVIES_REQUEST':
+      return {
+        ...state,
+        loading: true,
+        errorMessage: null
+      }
+    case 'SEARCH_MOVIES_SUCCESS':
+      return {
+        ...state,
+        loading: false,
+        movies: action.payload
+      }
+    case 'SEARCH_MOVIES_FAILURE':
+      return {
+        ...state,
+        loading: false,
+        errorMessage: action.error
+      }
+    default:
+      return state  
+  }
+}
 
 const App = () => {
-  const [loading, setLoading] = useState(true)
-  const [movies, setMovies] = useState([])
-  const [errorMessage, setErrorMessage] = useState(null)
+
+  const [state, dispatch] = useReducer(reducer, initialState)
 
   useEffect(()=>{
     fetch(MOVIE_API_URL)
       .then(response => response.json())
       .then(jsonResponse => {
-        setMovies(jsonResponse.Search)
-        setLoading(false)
+        dispatch({
+          type: 'SEARCH_MOVIES_SUCCESS',
+          payload: jsonResponse.Search
+        })
       })
   }, [])
 
   const search = searchValue => {
-    setLoading(true)
-    setErrorMessage(null)
+    dispatch({
+      type: 'SEARCH_MOVIES_REQUEST'
+    })
 
-    fetch(`https://www.omdbapi.com/?s=${searchValue}&apikey=4a3b711b`)
+    fetch(`https://www.omdbapi.com/?s=${searchValue}&apikey=99fc8e27`)
       .then(response => response.json())
       .then(jsonResponse => {
         if (jsonResponse.Response === 'True') {
-          setMovies(jsonResponse.Search)
-          setLoading(false)
+          dispatch({
+            type: 'SEARCH_MOVIES_SUCCESS',
+            payload: jsonResponse.Search
+          })
         } else {
-          setErrorMessage(jsonResponse.Error)
-          setLoading(false)
+          dispatch({
+            type: 'SEARCH_MOVIES_FAILURE',
+            error: jsonResponse.Error
+          })
         }
       })
   }
+
+  const { movies, errorMessage, loading } = state
 
   return (
     <div className='App'>
