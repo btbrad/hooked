@@ -1,10 +1,10 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Input } from 'antd'
 
 const { Search } = Input
 
 const SearchComp = (props) => {
-  // const [searchValue, setSearchValue] = useState('')
+  const [searchValue, setSearchValue] = useState('')
   const searchFn = props.search
 
   // const handleSearchInputChanges = e => {
@@ -26,6 +26,7 @@ const SearchComp = (props) => {
 
   const handleSearch = value => {
     searchFn(value)
+    setSearchValue(value)
     // restInputFiled()
   }
 
@@ -39,6 +40,7 @@ const SearchComp = (props) => {
         placeholder="input movie name"
         enterButton="Search"
         size="large"
+        defaultValue={searchValue}
         onSearch={value => handleSearch(value)}
       />
     </div>
