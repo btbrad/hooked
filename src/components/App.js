@@ -3,12 +3,15 @@ import './App.css';
 import Movie from './Movie'
 import Header from './header'
 import Search from './Search'
+import { Spin, Pagination } from 'antd'
 
 const MOVIE_API_URL = "https://www.omdbapi.com/?s=mission&apikey=99fc8e27"
 
 const initialState = {
   loading: true,
   moves: [],
+  searchValue: 'mission',
+  total: 0,
   errorMessage: null
 }
 
@@ -18,13 +21,15 @@ const reducer = (state, action) => {
       return {
         ...state,
         loading: true,
-        errorMessage: null
+        errorMessage: null,
+        searchValue: action.payload
       }
     case 'SEARCH_MOVIES_SUCCESS':
       return {
         ...state,
         loading: false,
-        movies: action.payload
+        movies: action.payload.Search,
+        total: action.payload.totalResults
       }
     case 'SEARCH_MOVIES_FAILURE':
       return {
@@ -47,23 +52,24 @@ const App = () => {
       .then(jsonResponse => {
         dispatch({
           type: 'SEARCH_MOVIES_SUCCESS',
-          payload: jsonResponse.Search
+          payload: jsonResponse
         })
       })
   }, [])
 
-  const search = searchValue => {
+  const search = (searchValue, page=1) => {
     dispatch({
-      type: 'SEARCH_MOVIES_REQUEST'
+      type: 'SEARCH_MOVIES_REQUEST',
+      payload: searchValue
     })
 
-    fetch(`https://www.omdbapi.com/?s=${searchValue}&apikey=99fc8e27`)
+    fetch(`https://www.omdbapi.com/?s=${searchValue}&apikey=99fc8e27&page=${page}`)
       .then(response => response.json())
       .then(jsonResponse => {
         if (jsonResponse.Response === 'True') {
           dispatch({
             type: 'SEARCH_MOVIES_SUCCESS',
-            payload: jsonResponse.Search
+            payload: jsonResponse
           })
         } else {
           dispatch({
@@ -74,26 +80,27 @@ const App = () => {
       })
   }
 
-  const { movies, errorMessage, loading } = state
+  const { movies, errorMessage, loading, total, searchValue } = state
 
   return (
     <div className='App'>
-      <Header text="HOOKED" />
+      <Header text="Movie Engine" />
       <Search search={search} />
       <p className='App-intro'>Sharing a few of our favorite movies</p>
-      <div className="movies">
-        {
-          loading && !errorMessage ? (
-            <span>loading....</span>
-          ) : errorMessage ? (
-            <div className='errorMessage'>{errorMessage}</div>
-          ) : (
-            movies && movies.map((movie, index) => 
-              <Movie key={`${index}-${movie.title}`}  movie={movie}/>
+      <Spin size="large" spinning={loading}>
+        <div className="movies">
+          {
+            errorMessage ? (
+              <div className='errorMessage'>{errorMessage}</div>
+            ) : (
+              movies && movies.map((movie, index) => 
+                <Movie key={`${index}-${movie.title}`}  movie={movie}/>
+              )
             )
-          )
-        }
-      </div>
+          }
+        </div>
+      </Spin>
+      {movies && movies.length && <Pagination defaultCurrent={1} total={total} showSizeChanger={false} onChange={(page)=>{ search(searchValue, page) }}/>}
     </div>
   )
 
